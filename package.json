@@ -1,0 +1,13 @@
+{
+  "name": "heterarchy-people",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Heterarchy Society people data repository",
+  "scripts": {
+    "build": "heterarchy-atlas build"
+  },
+  "dependencies": {
+    "@heterarchy/atlas": "github:heterarchy-society/atlas"
+  },
+  "license": "MIT"
+}

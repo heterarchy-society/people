@@ -1,0 +1,19 @@
+name: Juraj Bednár
+avatar: avatar.png
+altNames:
+  - Juraj Bednar
+  - Juraj Bednár
+refs:
+  web: https://juraj.bednar.io
+  twitter: jurbed
+  nostr: npub1m2mvvpjugwdehtaskrcl7ksvdqnnhnjur9v6g9v266nss504q7mqvlr8p9
+  github: jooray
+roles:
+  - project: institute-of-cryptoanarchy
+    type: contributor
+merit: 50302
+description: >
+  Juraj is a serial entrepreneur and founder of Progressbar, Paralelná Polis,
+  and Hacktrophy. He wrote several books, his latest one being
+  "Cryptocurrencies - hack your way to a better life". He creates online
+  courses and content about privacy, crypto, and entrepreneurship.

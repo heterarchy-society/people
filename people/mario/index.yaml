@@ -1,0 +1,24 @@
+name: Mário Havel
+avatar: avatar.png
+altNames:
+  - Mario Havel
+refs:
+  twitter: TMIYChao
+  github: taxmeifyoucan
+roles:
+  - project: bordel
+    type: contributor
+  - project: hackathoshi-flying-circuit
+    type: contributor
+  - project: ethprague
+    type: contributor
+  - project: hacker-stories-series
+    type: contributor
+merit: 15080.6
+description: >
+  Mário is a hacker and researcher working with EF on making the crypto
+  ecosystem more efficient and anonymous. As a member of Paralelní Polis,
+  co-founder of Bordel Hackerspace, and the driving force behind Pizza Day
+  Prague, Mário educates about tools of cryptoanarchy in local communities with
+  a focus on onboarding via Lightning and p2p exchange. He is a vast enjoyer of
+  FOSS, parallel economy, and trolling bitcoiners.

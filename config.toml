@@ -1,0 +1,8 @@
+[collection]
+name = "people"
+source_dir = "people"
+format = "yaml"
+output_key = "people"
+git_history = true
+dir_based = true
+copy_sources = true
