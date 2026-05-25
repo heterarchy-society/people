@@ -1,5 +1,16 @@
 name: Vitalik Buterin
+born: "1994-01-31"
 avatar: avatar.jpg
+caption: "Co-founder of Ethereum"
+description: >
+  Russian-Canadian programmer and co-founder of Ethereum. Proposed the
+  Ethereum protocol in 2013 at nineteen, envisioning a general-purpose
+  blockchain with a Turing-complete scripting language that could host
+  smart contracts and decentralised applications far beyond simple value
+  transfer. Ethereum launched in 2015 and became the foundation for DeFi,
+  NFTs, DAOs, and most of the programmable-money ecosystem. An active
+  essayist on cryptography, mechanism design, and political philosophy at
+  vitalik.eth.limo.
 refs:
   web: https://vitalik.eth.limo
   twitter: VitalikButerin

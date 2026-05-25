@@ -1,0 +1,11 @@
+name: Hal Finney
+born: "1956-05-04"
+died: "2014-08-28"
+avatar: avatar.jpg
+altNames:
+  - Harold Thomas Finney II
+caption: "Cypherpunk and early Bitcoin developer"
+description: >
+  American cryptographer, cypherpunk, and PGP developer. Created the first
+  reusable proof-of-work system (2004) and received the first Bitcoin
+  transaction from Satoshi Nakamoto in January 2009.
