@@ -8,7 +8,7 @@
     "validate": "heterarchy-atlas validate"
   },
   "dependencies": {
-    "@heterarchy/atlas": "github:heterarchy-society/atlas#6829f87"
+    "@heterarchy/atlas": "github:heterarchy-society/atlas#3587bb9"
   },
   "license": "MIT"
 }

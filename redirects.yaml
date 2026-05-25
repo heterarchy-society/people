@@ -1,0 +1,4 @@
+# Former item ids → current canonical id.
+# Add an entry when renaming a person directory (git mv people/old people/new).
+#
+# mario: mario-havel

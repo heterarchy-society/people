@@ -17,3 +17,15 @@ Key fields:
 - `avatar` — primary portrait (`avatar.png`, `avatar.jpg`, or `avatar.webp`)
 - `avatarsAlt` — optional list of alternative portrait filenames in the person directory
 - `refs` — optional links (`twitter`, `github`, `web`, `bsky`, `nostr`, `matrix`)
+
+## Renames
+
+When an item id changes, add the old id to [`redirects.yaml`](redirects.yaml) at the repo root:
+
+```yaml
+mario: mario-havel
+```
+
+Build emits these into `dist/index.json` as `meta.redirects` for the frontend to honor old URLs.
+Use `altNames` for display nicknames — not for slug changes.
+
