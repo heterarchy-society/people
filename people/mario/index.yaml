@@ -5,16 +5,6 @@ altNames:
 refs:
   twitter: TMIYChao
   github: taxmeifyoucan
-roles:
-  - project: bordel
-    type: contributor
-  - project: hackathoshi-flying-circuit
-    type: contributor
-  - project: ethprague
-    type: contributor
-  - project: hacker-stories-series
-    type: contributor
-merit: 15080.6
 description: >
   Mário is a hacker and researcher working with EF on making the crypto
   ecosystem more efficient and anonymous. As a member of Paralelní Polis,
