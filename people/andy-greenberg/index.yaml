@@ -1,4 +1,12 @@
 name: Andy Greenberg
 avatar: avatar.jpg
+caption: "WIRED senior writer and cybersecurity journalist"
+description: >
+  American journalist and author. Senior writer at WIRED covering hacking,
+  cybersecurity, surveillance, and cypherpunk history. Author of This Machine
+  Kills Secrets (WikiLeaks and radical transparency), Sandworm (state cyberwar),
+  and Tracers in the Dark (law enforcement and blockchain tracing of
+  cryptocurrency crime).
 refs:
   twitter: a_greenberg
+  web: https://www.wired.com/author/andy-greenberg/
