@@ -30,6 +30,14 @@ jobs:
         if: github.event_name == 'repository_dispatch'
         run: bun update @heterarchy/atlas
 
+      - name: Cache Atlas Images
+        uses: actions/cache@v3
+        with:
+          path: .atlas-cache
+          key: atlas-images-${{ github.repository }}-${{ github.sha }}
+          restore-keys: |
+            atlas-images-${{ github.repository }}-
+
       - run: bun run build
 
       - uses: actions/configure-pages@v5

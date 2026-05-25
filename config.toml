@@ -7,3 +7,4 @@ output_key = "people"
 git_history = true
 dir_based = true
 copy_sources = true
+image_sizes = [200, 400]
