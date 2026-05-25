@@ -1,0 +1,12 @@
+name: "Oskar Thorén"
+avatar: avatar.jpg
+refs:
+  twitter: oskarth
+description: >
+  Oskar is an independent researcher, focused on programmable cryptography.
+  Recently, he has been writing about Zero-Knowledge Proofs (ZKPs) at
+  zkintro.com, exploring folding schemes with a Nova-based ZK-VM, and building
+  mopro to make client-side proving on mobile easier. Previously, he founded
+  and was Director of Research at Vac.dev, an R&D organization building public
+  good protocols for the decentralized web, with a focus on privacy and
+  communication.
