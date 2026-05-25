@@ -1,5 +1,6 @@
 [collection]
 name = "people"
+schema = "people.json"
 source_dir = "people"
 format = "yaml"
 output_key = "people"

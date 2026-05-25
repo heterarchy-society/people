@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Heterarchy Society people data repository",
   "scripts": {
-    "build": "heterarchy-atlas build"
+    "build": "heterarchy-atlas build",
+    "validate": "heterarchy-atlas validate"
   },
   "dependencies": {
     "@heterarchy/atlas": "github:heterarchy-society/atlas"

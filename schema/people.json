@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://heterarchy.fyi/schema/people.json",
+  "type": "object",
+  "required": ["id", "name", "avatar"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9\\-]+$"
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "avatar": {
+      "type": "string",
+      "pattern": "^avatar\\.(png|jpe?g|webp)$",
+      "description": "Primary portrait filename in the person directory"
+    },
+    "avatarsAlt": {
+      "type": "array",
+      "description": "Alternative portrait filenames (event photos, variants, etc.)",
+      "items": {
+        "type": "string",
+        "pattern": "^[^/\\\\]+\\.(png|jpe?g|webp|gif)$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "altNames": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "born": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "died": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "caption": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "twitter": { "type": "string", "minLength": 1 },
+        "github": { "type": "string", "minLength": 1 },
+        "web": { "type": "string", "minLength": 1 },
+        "bsky": { "type": "string", "minLength": 1 },
+        "nostr": { "type": "string", "minLength": 1 },
+        "matrix": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
