@@ -29,3 +29,5 @@ mario: mario-havel
 Build emits these into `dist/index.json` as `meta.redirects` for the frontend to honor old URLs.
 Use `altNames` for display nicknames — not for slug changes.
 
+Other datasets link here as `[Display Name](people:<id>)` in markdown descriptions (resolved on the frontend). Keep the visible label on the left, e.g. `[Wei Dai](people:wei-dai)`.
+
