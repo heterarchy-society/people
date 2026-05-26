@@ -5,14 +5,14 @@
     "": {
       "name": "heterarchy-people",
       "dependencies": {
-        "@heterarchy/atlas": "github:heterarchy-society/atlas#6829f87",
+        "@heterarchy/atlas": "github:heterarchy-society/atlas#ff8f0a4",
       },
     },
   },
   "packages": {
     "@emnapi/runtime": ["@emnapi/runtime@1.10.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-ewvYlk86xUoGI0zQRNq/mC+16R1QeDlKQy21Ki3oSYXNgLb45GV1P6A0M+/s6nyCuNDqe5VpaY84BzXGwVbwFA=="],
 
-    "@heterarchy/atlas": ["@heterarchy/atlas@github:heterarchy-society/atlas#6829f87", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1", "gray-matter": "^4.0.3", "js-yaml": "^4.1.0", "sharp": "^0.34.5", "smol-toml": "^1.6.1" }, "bin": { "heterarchy-atlas": "./bin/atlas.js" } }, "heterarchy-society-atlas-6829f87", "sha512-AHBfR8pHfzNCnSuT2TCkz3prOvJE+yk1Y3BbKgA474d7VnFAlwBzbuEKJ65g0rlWzV3WumvsTeLrqLV8if/GtA=="],
+    "@heterarchy/atlas": ["@heterarchy/atlas@github:heterarchy-society/atlas#ff8f0a4", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1", "gray-matter": "^4.0.3", "js-yaml": "^4.1.0", "sharp": "^0.34.5", "smol-toml": "^1.6.1" }, "bin": { "heterarchy-atlas": "./bin/atlas.js" } }, "heterarchy-society-atlas-ff8f0a4", "sha512-BYnpEFZi9k5FNosUGR2pTxsOr7FngQ2R+wVtRveollZCl00zcQG7tp5qzEU73EM4Jln2732vXiEIUCYUTpeeWg=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 
