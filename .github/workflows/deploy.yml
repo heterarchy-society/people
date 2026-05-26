@@ -28,7 +28,7 @@ jobs:
 
       - name: Update Atlas dependency
         if: github.event_name == 'repository_dispatch'
-        run: bun update @heterarchy/atlas
+        run: bun update @heterarchy-society/atlas
 
       - name: Cache Atlas Images
         uses: actions/cache@v3
