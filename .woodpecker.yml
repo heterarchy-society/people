@@ -1,4 +1,4 @@
-# Full git history required for atlas git_history (see .github/workflows deploy.yml fetch-depth: 0).
+# Full git history required for atlas git_history.
 clone:
   git:
     image: woodpeckerci/plugin-git
