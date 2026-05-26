@@ -1,0 +1,33 @@
+# Full git history required for atlas git_history (see .github/workflows deploy.yml fetch-depth: 0).
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      partial: false
+      depth: 0
+
+when:
+  - event: push
+    branch: main
+  - event: pull_request
+  - event: manual
+
+steps:
+  - name: build
+    image: oven/bun:1
+    commands:
+      - bun install --frozen-lockfile
+      - bun run validate
+      - bun run build
+
+  - name: deploy
+    image: rclone/rclone:latest
+    when:
+      - event: push
+        branch: main
+    depends_on: [build]
+    environment:
+      DEPLOY_PASSWORD:
+        from_secret: DEPLOY_SECRET
+    commands:
+      - rclone sync dist/ ":sftp,host=sftpgo.heterarchy.fyi,port=2222,user=heterarchy,pass=$DEPLOY_PASSWORD:/public/people" -v
