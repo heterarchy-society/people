@@ -48,6 +48,7 @@
         "twitter": { "type": "string", "minLength": 1 },
         "github": { "type": "string", "minLength": 1 },
         "web": { "type": "string", "minLength": 1 },
+        "wikipedia": { "type": "string", "minLength": 1 },
         "bsky": { "type": "string", "minLength": 1 },
         "nostr": { "type": "string", "minLength": 1 },
         "matrix": { "type": "string", "minLength": 1 }
