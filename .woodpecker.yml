@@ -54,3 +54,15 @@ steps:
         from_secret: DEPLOY_SECRET
     commands:
       - rclone sync dist/ ":sftp,host=sftpgo.heterarchy.fyi,port=2222,user=heterarchy,pass=$DEPLOY_PASSWORD:/public/people" -v
+
+  - name: trigger-website
+    image: woodpeckerci/plugin-trigger
+    when:
+      - event: push
+        branch: main
+    depends_on: [deploy]
+    settings:
+      repositories:
+        - heterarchy-society/heterarchy.fyi
+      token:
+        from_secret: WOODPECKER_TOKEN
