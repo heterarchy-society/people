@@ -1,0 +1,17 @@
+name: pcaversaccio
+avatar: avatar.jpg
+altNames:
+  - Pascal Caversaccio
+  - pc
+caption: Author of The Ethereum Cypherpunk Manifesto
+refs:
+  twitter: pcaversaccio
+  github: pcaversaccio
+  web: https://pcaversaccio.com/
+description: >
+  Swiss engineer and entrepreneur working at the intersection of privacy, security, cryptography, and
+  distributed systems. Author of [The Ethereum Cypherpunk Manifesto](writings:ethereum-cypherpunk-manifesto)
+  (2024), published on-chain and as an EIP-4844 blob. Known for open-source tooling around Ethereum smart
+  contract security — including snekmate (Vyper building blocks), CreateX, xdeployer, and the
+  reentrancy-attacks archive — and for contributions to the Vyper ecosystem. Prefers to be quoted as
+  "pcaversaccio" (no capitalisation).
