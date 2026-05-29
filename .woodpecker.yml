@@ -1,4 +1,6 @@
 # Full git history required for atlas git_history.
+# History cache lives on the agent at /var/lib/woodpecker/atlas-history-cache/{repo}/.
+# Requires trusted repo (volumes). Create once on the agent: mkdir -p /var/lib/woodpecker/atlas-history-cache
 clone:
   git:
     image: woodpeckerci/plugin-git
@@ -13,12 +15,33 @@ when:
   - event: manual
 
 steps:
+  - name: restore-history-cache
+    image: alpine:3
+    volumes:
+      - /var/lib/woodpecker/atlas-history-cache:/cache
+    commands:
+      - mkdir -p .atlas-cache/history
+      - cp -a "/cache/${CI_REPO_NAME}/." .atlas-cache/history/ 2>/dev/null || true
+
   - name: build
     image: oven/bun:1
     commands:
       - bun install --frozen-lockfile
       - bun run validate
       - bun run build
+
+  - name: save-history-cache
+    image: alpine:3
+    depends_on: [build]
+    when:
+      - event: push
+        branch: main
+    volumes:
+      - /var/lib/woodpecker/atlas-history-cache:/cache
+    commands:
+      - mkdir -p "/cache/${CI_REPO_NAME}"
+      - rm -rf "/cache/${CI_REPO_NAME:?}/"*
+      - cp -a .atlas-cache/history/. "/cache/${CI_REPO_NAME}/"
 
   - name: deploy
     image: rclone/rclone:latest
