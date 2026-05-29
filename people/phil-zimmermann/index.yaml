@@ -1,0 +1,18 @@
+name: Phil Zimmermann
+avatar: avatar.jpg
+altNames:
+  - Philip Zimmermann
+born: "1954-02-12"
+caption: "Creator of PGP and central figure of the first Crypto Wars"
+refs:
+  web: https://philzimmermann.com/
+  wikipedia: Phil_Zimmermann
+description: >
+  American cryptographer and software engineer who released PGP (Pretty
+  Good Privacy) in 1991, putting strong public-key cryptography in the
+  hands of ordinary users for the first time. The international spread
+  of PGP triggered a three-year U.S. federal criminal investigation for
+  alleged munitions export, dropped without charges in 1996. Co-founder
+  of the OpenPGP working group at the IETF and later of Silent Circle.
+  His stand made "code as speech" a working principle of the cypherpunk
+  movement.
