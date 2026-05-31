@@ -6,10 +6,12 @@
  *   node scripts/import-neocypherpunk-speakers.js --update-existing [html] # enrich pre-existing speaker profiles
  *   node scripts/import-neocypherpunk-speakers.js --audit [html]             # report suspect imports
  *   node scripts/import-neocypherpunk-speakers.js --import-team [html]       # create/link summit team as organizers
+ *   node scripts/import-neocypherpunk-speakers.js --dedupe-avatars           # remove avatar-alt files identical to primary
  */
 import { execSync } from 'node:child_process'
-import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, unlinkSync } from 'node:fs'
 import { join, extname } from 'node:path'
+import { createHash } from 'node:crypto'
 
 const ROOT = join(import.meta.dirname, '..')
 const PEOPLE = join(ROOT, 'people')
@@ -21,6 +23,7 @@ const FIX_REFS = args.includes('--fix-refs')
 const UPDATE_EXISTING = args.includes('--update-existing')
 const AUDIT = args.includes('--audit')
 const IMPORT_TEAM = args.includes('--import-team')
+const DEDUPE_AVATARS = args.includes('--dedupe-avatars')
 const HTML_PATH = args.find(a => !a.startsWith('--')) ?? '/tmp/ncs.html'
 
 const ORG_TWITTER = new Set(['web3privacy', 'winprivacy'])
@@ -340,6 +343,28 @@ function upsertAvatarsAlt(yaml, filename) {
   return lines.join('\n')
 }
 
+function removeAvatarsAlt(yaml, filename) {
+  const alts = listAvatarsAlt(yaml).filter(a => a !== filename)
+  if (alts.length === listAvatarsAlt(yaml).length) return yaml
+  if (alts.length === 0) {
+    return yaml.replace(/\n?avatarsAlt:\n(?:  - .+\n)+/m, '\n').replace(/^\n+/, '')
+  }
+  return yaml.replace(/^avatarsAlt:\n(?:  - .+\n)+/m, `avatarsAlt:\n${alts.map(a => `  - ${a}`).join('\n')}\n`)
+}
+
+function fileHash(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex')
+}
+
+function avatarMatchesPrimary(dir, yaml, candidate) {
+  const primary = fieldBlock(yaml, 'avatar')
+  if (!primary || candidate === primary) return true
+  const primaryPath = join(dir, primary)
+  const candidatePath = join(dir, candidate)
+  if (!existsSync(primaryPath) || !existsSync(candidatePath)) return false
+  return fileHash(primaryPath) === fileHash(candidatePath)
+}
+
 function dedupeAltNames(yaml) {
   const block = yaml.match(/^altNames:\n((?:  - .+\n)+)/m)
   if (!block) return yaml
@@ -402,7 +427,12 @@ async function updateExistingProfiles(speakers, existing) {
     const alreadyAlt = listAvatarsAlt(yaml).includes(altFile)
     if (!SKIP_SUMMIT_AVATAR.has(id) && !alreadyAlt && sp.img) {
       if (!existsSync(altPath)) await downloadAvatar(sp.img, altPath)
-      yaml = upsertAvatarsAlt(yaml, altFile)
+      if (!avatarMatchesPrimary(dir, yaml, altFile)) {
+        yaml = upsertAvatarsAlt(yaml, altFile)
+      } else {
+        unlinkSync(altPath)
+        console.log(`  ~ ${id} — skipped ${altFile} (same as primary)`)
+      }
     }
 
     if (yaml !== before) {
@@ -605,6 +635,34 @@ async function importTeam(team, existing, byTwitter) {
   console.log(`Linked ${organizers.length} organizers on neocypherpunk-summit-berlin-2026`)
 }
 
+function dedupeAvatars() {
+  let removed = 0
+  for (const id of eventSpeakerIds()) {
+    const dir = join(PEOPLE, id)
+    const path = join(dir, 'index.yaml')
+    if (!existsSync(path)) continue
+    let yaml = readFileSync(path, 'utf8')
+    const before = yaml
+    for (const alt of [...listAvatarsAlt(yaml)]) {
+      const altPath = join(dir, alt)
+      if (!existsSync(altPath)) {
+        yaml = removeAvatarsAlt(yaml, alt)
+        continue
+      }
+      if (avatarMatchesPrimary(dir, yaml, alt)) {
+        unlinkSync(altPath)
+        yaml = removeAvatarsAlt(yaml, alt)
+        console.log(`  ✓ ${id} — removed ${alt} (duplicate of ${fieldBlock(yaml, 'avatar')})`)
+        removed++
+      }
+    }
+    if (yaml !== before) {
+      writeFileSync(path, yaml.endsWith('\n') ? yaml : `${yaml}\n`)
+    }
+  }
+  console.log(`\nRemoved ${removed} duplicate avatar-alt file(s)`)
+}
+
 async function main() {
   const html = readFileSync(HTML_PATH, 'utf8')
   const speakers = parseSpeakers(html)
@@ -628,6 +686,10 @@ async function main() {
     const byTwitter = loadExistingByTwitter()
     console.log(`Parsed ${team.length} team members from event page\n`)
     await importTeam(team, existing, byTwitter)
+    return
+  }
+  if (DEDUPE_AVATARS) {
+    dedupeAvatars()
     return
   }
   await importMissing(speakers, existing)
