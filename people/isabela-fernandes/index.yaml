@@ -1,7 +1,9 @@
 name: Isabela Fernandes
 avatar: avatar.jpg
+altNames:
+  - Isabela Bagueros
 caption: Tor
 description: >
   Executive director, growing one of the world’s most important anonymity networks.
 refs:
-  twitter: Isa
+  web: https://www.torproject.org/

@@ -4,6 +4,7 @@
  *   node scripts/import-neocypherpunk-speakers.js [html-path]            # create missing people + link event
  *   node scripts/import-neocypherpunk-speakers.js --fix-refs [html]      # repair refs on imported speakers
  *   node scripts/import-neocypherpunk-speakers.js --update-existing [html] # enrich pre-existing speaker profiles
+ *   node scripts/import-neocypherpunk-speakers.js --audit [html]             # report suspect imports
  */
 import { execSync } from 'node:child_process'
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
@@ -17,7 +18,10 @@ const ALT_AVATAR = 'avatar-alt'
 const args = process.argv.slice(2)
 const FIX_REFS = args.includes('--fix-refs')
 const UPDATE_EXISTING = args.includes('--update-existing')
+const AUDIT = args.includes('--audit')
 const HTML_PATH = args.find(a => !a.startsWith('--')) ?? '/tmp/ncs.html'
+
+const ORG_TWITTER = new Set(['web3privacy', 'winprivacy'])
 
 const SKIP_SUMMIT_AVATAR = new Set(['jaromil'])
 
@@ -70,10 +74,16 @@ function loadExisting() {
   return byName
 }
 
+function isSuspiciousTwitter(handle) {
+  if (!handle) return false
+  const h = handle.toLowerCase()
+  return h.length <= 3 || ORG_TWITTER.has(h)
+}
+
 function extractRefs(href) {
   if (!href) return {}
   const twitter = href.match(/(?:x\.com|twitter\.com)\/@?([^/?#]+)/i)?.[1]
-  if (twitter) return { twitter }
+  if (twitter && !isSuspiciousTwitter(twitter)) return { twitter }
   if (/^https?:\/\//i.test(href)) return { web: href }
   return {}
 }
@@ -186,7 +196,7 @@ function mergeRefs(yaml, { twitter, web }) {
     return upsertRefs(yaml, { twitter, web })
   }
   let next = yaml
-  if (twitter && !existingTw) {
+  if (twitter && !existingTw && !isSuspiciousTwitter(twitter)) {
     next = next.replace(/^refs:\n/m, `refs:\n  twitter: ${twitter}\n`)
   }
   if (web && !existingWeb) {
@@ -258,6 +268,20 @@ function upsertAvatarsAlt(yaml, filename) {
   return lines.join('\n')
 }
 
+function dedupeAltNames(yaml) {
+  const block = yaml.match(/^altNames:\n((?:  - .+\n)+)/m)
+  if (!block) return yaml
+  const seen = new Set()
+  const items = []
+  for (const raw of block[1].match(/^  - (.+)$/gm).map(l => l.slice(4).trim())) {
+    const key = norm(raw.replace(/^"|"$/g, ''))
+    if (seen.has(key)) continue
+    seen.add(key)
+    items.push(raw)
+  }
+  return yaml.replace(/^altNames:\n(?:  - .+\n)+/m, `altNames:\n${items.map(i => `  - ${i}`).join('\n')}\n`)
+}
+
 function existedBeforeSummitImport(id) {
   try {
     execSync(`git cat-file -e 'c62c99d^:people/${id}/index.yaml'`, { cwd: ROOT, stdio: 'ignore' })
@@ -298,6 +322,7 @@ async function updateExistingProfiles(speakers, existing) {
     yaml = upsertDescription(yaml, sp.desc)
     yaml = mergeRefs(yaml, { twitter: sp.twitter, web: sp.web })
     yaml = upsertAltName(yaml, sp.name)
+    yaml = dedupeAltNames(yaml)
 
     const ext = avatarExt(sp.img)
     const altFile = `${ALT_AVATAR}.${ext}`
@@ -323,6 +348,67 @@ function eventSpeakerIds() {
   return yaml.match(/^speakers:\n((?:  - .+\n)+)/m)?.[1]
     .match(/^  - (.+)$/gm)
     .map(l => l.slice(4)) ?? []
+}
+
+function auditProfiles(speakers, existing) {
+  const byId = new Map(speakers.map(sp => [resolveId(sp.name, existing), sp]))
+  const issues = []
+
+  for (const id of eventSpeakerIds()) {
+    const sp = byId.get(id)
+    const path = join(PEOPLE, id, 'index.yaml')
+    if (!sp) {
+      issues.push({ id, level: 'high', msg: 'on event list but missing from parsed summit speakers' })
+      continue
+    }
+    if (!existsSync(path)) {
+      issues.push({ id, level: 'high', msg: 'missing index.yaml' })
+      continue
+    }
+
+    const y = readFileSync(path, 'utf8')
+    const tw = y.match(/^  twitter: (.+)$/m)?.[1]
+    const avatar = fieldBlock(y, 'avatar')
+    const avatarPath = join(PEOPLE, id, avatar)
+
+    if (sp.img.includes('//') || sp.img.includes(',')) {
+      issues.push({ id, level: 'medium', msg: `site image path looks broken: ${sp.img}` })
+    }
+    if (sp.href && isSuspiciousTwitter(sp.href.match(/(?:x\.com|twitter\.com)\/@?([^/?#]+)/i)?.[1])) {
+      issues.push({ id, level: 'high', msg: `site links to bad twitter handle (${sp.href})` })
+    }
+    if (tw && isSuspiciousTwitter(tw)) {
+      issues.push({ id, level: 'high', msg: `profile has suspicious twitter: ${tw}` })
+    }
+    if (tw && sp.twitter && tw.toLowerCase() !== sp.twitter.toLowerCase()) {
+      issues.push({ id, level: 'high', msg: `twitter mismatch: db=${tw} site=${sp.twitter}` })
+    }
+    if (avatar && existsSync(avatarPath)) {
+      const size = readFileSync(avatarPath).length
+      if (size < 8000) issues.push({ id, level: 'medium', msg: `${avatar} is very small (${size} bytes)` })
+      if (size > 500_000) issues.push({ id, level: 'low', msg: `${avatar} is large (${Math.round(size / 1024)}KB)` })
+    } else if (avatar) {
+      issues.push({ id, level: 'high', msg: `missing avatar file ${avatar}` })
+    }
+    for (const alt of listAvatarsAlt(y)) {
+      if (!existsSync(join(PEOPLE, id, alt))) {
+        issues.push({ id, level: 'high', msg: `missing avatarsAlt file ${alt}` })
+      }
+    }
+    const altNorms = listAltNames(y).map(n => norm(n.replace(/^"|"$/g, '')))
+    if (altNorms.length !== new Set(altNorms).size) {
+      issues.push({ id, level: 'high', msg: 'duplicate altNames (case/spelling variants)' })
+    }
+    if (!sp.href && !sp.twitter && !sp.web) {
+      issues.push({ id, level: 'low', msg: 'no link on summit card' })
+    }
+  }
+
+  const order = { high: 0, medium: 1, low: 2 }
+  issues.sort((a, b) => order[a.level] - order[b.level] || a.id.localeCompare(b.id))
+  console.log(`Audit: ${issues.length} issue(s)\n`)
+  for (const i of issues) console.log(`[${i.level}] ${i.id}: ${i.msg}`)
+  if (issues.some(i => i.level === 'high')) process.exitCode = 1
 }
 
 async function fixRefs(speakers, existing) {
@@ -399,6 +485,10 @@ async function main() {
 
   if (FIX_REFS) {
     await fixRefs(speakers, existing)
+    return
+  }
+  if (AUDIT) {
+    auditProfiles(speakers, existing)
     return
   }
   if (UPDATE_EXISTING) {
