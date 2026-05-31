@@ -5,6 +5,7 @@
  *   node scripts/import-neocypherpunk-speakers.js --fix-refs [html]      # repair refs on imported speakers
  *   node scripts/import-neocypherpunk-speakers.js --update-existing [html] # enrich pre-existing speaker profiles
  *   node scripts/import-neocypherpunk-speakers.js --audit [html]             # report suspect imports
+ *   node scripts/import-neocypherpunk-speakers.js --import-team [html]       # create/link summit team as organizers
  */
 import { execSync } from 'node:child_process'
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
@@ -19,6 +20,7 @@ const args = process.argv.slice(2)
 const FIX_REFS = args.includes('--fix-refs')
 const UPDATE_EXISTING = args.includes('--update-existing')
 const AUDIT = args.includes('--audit')
+const IMPORT_TEAM = args.includes('--import-team')
 const HTML_PATH = args.find(a => !a.startsWith('--')) ?? '/tmp/ncs.html'
 
 const ORG_TWITTER = new Set(['web3privacy', 'winprivacy'])
@@ -31,6 +33,26 @@ const ID_OVERRIDES = {
   'nick almond': 'dr-nick',
   'josh davila': 'joshua-davila',
   'peter szilagyi': 'peter-szilagyi',
+}
+
+const TEAM_ID_OVERRIDES = {
+  mykola: 'mykola-siusko',
+  pg: 'pg',
+  beth: 'beth-mccarthy',
+  robert: 'robert-degroot',
+  coinmandeer: 'coinmandeer',
+  teresa: 'teresa-neppi',
+  federico: 'federico',
+  jensei: 'jensei',
+  dani: 'dani-saturn',
+}
+
+const TEAM_DISPLAY_NAMES = {
+  beth: 'Beth McCarthy',
+  teresa: 'Teresa Neppi',
+  federico: 'Federico',
+  jensei: 'Jensei',
+  dani: 'Dani',
 }
 
 function slugify(name) {
@@ -72,6 +94,17 @@ function loadExisting() {
     byName.set(norm(dir.replace(/-/g, ' ')), dir)
   }
   return byName
+}
+
+function loadExistingByTwitter() {
+  const byTwitter = new Map()
+  for (const dir of readdirSync(PEOPLE)) {
+    const yamlPath = join(PEOPLE, dir, 'index.yaml')
+    if (!existsSync(yamlPath)) continue
+    const tw = readFileSync(yamlPath, 'utf8').match(/^  twitter: (.+)$/m)?.[1]
+    if (tw) byTwitter.set(tw.toLowerCase(), dir)
+  }
+  return byTwitter
 }
 
 function isSuspiciousTwitter(handle) {
@@ -132,11 +165,49 @@ export function parseSpeakers(html) {
   return speakers
 }
 
+export function parseTeam(html) {
+  const start = html.indexOf('<div id="team"')
+  if (start < 0) throw new Error('Could not locate team section in HTML')
+  const end = html.indexOf('<!-- Volunteer Section -->', start)
+  const section = html.slice(start, end > start ? end : undefined)
+  const re = /<div class="team-member">\s*<div class="team-avatar">\s*<img src="\.\/img\/([^"]+)" alt="([^"]*)">\s*<\/div>\s*<h3 class="team-name">([^<]+)<\/h3>\s*<a href="([^"]*)"[^>]*class="team-handle"[^>]*>([^<]*)<\/a>\s*<\/div>/g
+  const team = []
+  let m
+  while ((m = re.exec(section))) {
+    const label = m[3].trim()
+    const [name, ...roleParts] = label.split(/\s+x\s+/i)
+    team.push({
+      name: name.trim(),
+      role: roleParts.join(' x ').trim(),
+      img: m[1],
+      imgAlt: m[2].trim(),
+      href: m[4].trim(),
+      handle: m[5].trim(),
+      ...extractRefs(m[4].trim()),
+    })
+  }
+  return team
+}
+
 function resolveId(name, existing) {
   const n = norm(name.replace(/^dr\.?\s+/i, ''))
   if (ID_OVERRIDES[n]) return ID_OVERRIDES[n]
   if (existing.has(n)) return existing.get(n)
   return slugify(name)
+}
+
+function resolveTeamId(member, existing, byTwitter) {
+  if (member.twitter && byTwitter.has(member.twitter.toLowerCase())) {
+    return byTwitter.get(member.twitter.toLowerCase())
+  }
+  const n = norm(member.name)
+  if (TEAM_ID_OVERRIDES[n]) return TEAM_ID_OVERRIDES[n]
+  if (existing.has(n)) return existing.get(n)
+  return slugify(TEAM_DISPLAY_NAMES[n] ?? member.name)
+}
+
+function teamDisplayName(member) {
+  return TEAM_DISPLAY_NAMES[norm(member.name)] ?? titleCase(member.name)
 }
 
 function avatarExt(urlPath) {
@@ -166,9 +237,10 @@ function refsYaml({ twitter, web }) {
   return lines.join('\n')
 }
 
-function buildPersonYaml({ name, org, desc, twitter, web, avatarFile }) {
+function buildPersonYaml({ name, org, desc, twitter, web, avatarFile, formatName = true }) {
+  const display = formatName ? titleCase(name.replace(/^DR /i, 'Dr ')) : name
   const lines = [
-    `name: ${yamlEscape(titleCase(name.replace(/^DR /i, 'Dr ')))}`,
+    `name: ${yamlEscape(display)}`,
     `avatar: ${avatarFile}`,
   ]
   if (org) lines.push(`caption: ${yamlEscape(org)}`)
@@ -477,6 +549,62 @@ async function importMissing(speakers, existing) {
   console.log(`Linked ${uniqueIds.length} speakers on neocypherpunk-summit-berlin-2026`)
 }
 
+function upsertEventOrganizers(organizers) {
+  const yaml = readFileSync(EVENT_PATH, 'utf8')
+  const block = organizers.map(({ id, role }) => {
+    if (role) return `  - id: ${id}\n    role: ${yamlEscape(role)}`
+    return `  - ${id}`
+  }).join('\n')
+  if (/^organizers:\n/m.test(yaml)) {
+    return yaml.replace(/^organizers:\n[\s\S]*?(?=^description:)/m, `organizers:\n${block}\n`)
+  }
+  return yaml.replace(/^description: >-/m, `organizers:\n${block}\ndescription: >-`)
+}
+
+async function importTeam(team, existing, byTwitter) {
+  const organizers = []
+  let created = 0
+  let reused = 0
+
+  for (const member of team) {
+    const id = resolveTeamId(member, existing, byTwitter)
+    organizers.push({ id, role: member.role })
+    const dir = join(PEOPLE, id)
+    const yamlPath = join(dir, 'index.yaml')
+
+    if (existsSync(yamlPath)) {
+      let yaml = readFileSync(yamlPath, 'utf8')
+      const before = yaml
+      yaml = mergeRefs(yaml, { twitter: member.twitter, web: member.web })
+      yaml = upsertAltName(yaml, teamDisplayName(member))
+      if (yaml !== before) writeFileSync(yamlPath, yaml.endsWith('\n') ? yaml : `${yaml}\n`)
+      console.log(`  ✓ ${id} (exists)`)
+      reused++
+      continue
+    }
+
+    mkdirSync(dir, { recursive: true })
+    const avatarFile = `avatar.${avatarExt(member.img)}`
+    await downloadAvatar(member.img, join(dir, avatarFile))
+    writeFileSync(yamlPath, buildPersonYaml({
+      name: teamDisplayName(member),
+      desc: '',
+      twitter: member.twitter,
+      web: member.web,
+      avatarFile,
+      formatName: false,
+    }), 'utf8')
+    existing.set(norm(member.name), id)
+    if (member.twitter) byTwitter.set(member.twitter.toLowerCase(), id)
+    console.log(`  + ${id}`)
+    created++
+  }
+
+  writeFileSync(EVENT_PATH, upsertEventOrganizers(organizers), 'utf8')
+  console.log(`\nCreated ${created} people, reused ${reused} existing`)
+  console.log(`Linked ${organizers.length} organizers on neocypherpunk-summit-berlin-2026`)
+}
+
 async function main() {
   const html = readFileSync(HTML_PATH, 'utf8')
   const speakers = parseSpeakers(html)
@@ -493,6 +621,13 @@ async function main() {
   }
   if (UPDATE_EXISTING) {
     await updateExistingProfiles(speakers, existing)
+    return
+  }
+  if (IMPORT_TEAM) {
+    const team = parseTeam(html)
+    const byTwitter = loadExistingByTwitter()
+    console.log(`Parsed ${team.length} team members from event page\n`)
+    await importTeam(team, existing, byTwitter)
     return
   }
   await importMissing(speakers, existing)
