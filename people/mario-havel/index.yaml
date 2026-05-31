@@ -4,9 +4,6 @@ avatarsAlt:
   - avatar-alt.jpg
 altNames:
   - Mario Havel
-refs:
-  twitter: TMIYChao
-  github: taxmeifyoucan
 description: >
   Mário is a hacker and researcher working with EF on making the crypto
   ecosystem more efficient and anonymous. As a member of Paralelní Polis,
@@ -14,3 +11,5 @@ description: >
   Prague, Mário educates about tools of cryptoanarchy in local communities with
   a focus on onboarding via Lightning and p2p exchange. He is a vast enjoyer of
   FOSS, parallel economy, and trolling bitcoiners.
+refs:
+  twitter: TMIYChao

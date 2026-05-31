@@ -2,8 +2,6 @@ name: Amir Taaki
 avatar: avatar.png
 altNames:
   - A. Taaki
-refs:
-  twitter: Narodism
 description: >
   As part of the forming Bitcoin community, Amir became an early Bitcoin
   developer, author of the BIP process, and the Libbitcoin implementation. With
@@ -14,3 +12,5 @@ description: >
   projects. Today, Amir is focused on the DarkFi project, a network bringing
   anonymity to decentralized finance, and is still working towards building an
   agonistic revolutionary hacker movement.
+refs:
+  twitter: lunardragon420

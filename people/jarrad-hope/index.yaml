@@ -3,8 +3,6 @@ avatar: avatar.png
 altNames:
   - Jarred Hope
   - J. Hope
-refs:
-  twitter: jarradhope_
 description: >
   Jarrad came to Bitcoin in early 2011 through agorism, counter-economics and
   crypto-anarchy. Seeing that Bitcoin could operate a monetary policy in a
@@ -16,3 +14,5 @@ description: >
   e2e and p2p private messaging client and super app, Status, he realised that
   privacy technologies are not enough and now is advocating for self-sovereign
   crypto-networks, the realisation of a latent cypherpunk dream, the crypto-state.
+refs:
+  twitter: jarradhope_

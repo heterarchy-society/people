@@ -1,7 +1,5 @@
 name: Jaromil
 avatar: avatar.png
-refs:
-  twitter: jaromil
 description: >
   Jaromil is a purpose-driven software artisan and hacktivist. Author of the
   forkbomb virus, dubbed as the most elegant computer code ever written, he is
@@ -9,3 +7,5 @@ description: >
   the founder of Dyne.org and has a long history in developing and
   disseminating digital tools for freedom of speech and privacy. For more Info
   and publications see jaromil.dyne.org
+refs:
+  twitter: jaromil
