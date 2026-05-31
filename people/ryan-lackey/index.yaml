@@ -1,5 +1,8 @@
 name: Ryan Lackey
 avatar: avatar.jpeg
+avatarsAlt:
+  - avatar-alt.jpg
+caption: "Cypherpunk & security"
 altNames:
   - R. Lackey
 refs:

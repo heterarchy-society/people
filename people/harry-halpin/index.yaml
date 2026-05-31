@@ -1,4 +1,7 @@
 name: Harry Halpin
 avatar: avatar.jpeg
+avatarsAlt:
+  - avatar-alt.png
+caption: CEO of NYM
 refs:
   twitter: harryhalpin

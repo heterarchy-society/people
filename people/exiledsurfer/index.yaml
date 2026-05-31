@@ -1,5 +1,8 @@
 name: Exiledsurfer
 avatar: avatar.jpeg
+avatarsAlt:
+  - avatar-alt.png
+caption: Open resourcerer
 refs:
   twitter: exiledsurfer
   bsky: exiledsurfer.bsky.social
