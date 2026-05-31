@@ -1,7 +1,12 @@
 name: Nick Almond
 avatar: avatar.png
+avatarsAlt:
+  - avatar-alt.jpg
+caption: Jito
 altNames:
   - DrNick
   - Dr.Nick
+description: >
+  Experienced DAO thinker on governance, infrastructure, and web3 incentives
 refs:
   twitter: DrNickA

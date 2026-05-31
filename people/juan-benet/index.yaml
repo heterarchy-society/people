@@ -1,5 +1,9 @@
 name: Juan Benet
 avatar: avatar.jpg
+avatarsAlt:
+  - avatar-alt.jpg
 caption: Obsessed with Knowledge, Science, and Technology -- Protocol Labs, IPFS, Filecoin
+description: >
+  Inventor of IPFS and Filecoin, redesigning how the internet stores and serves data.
 refs:
   twitter: juanbenet

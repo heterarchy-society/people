@@ -1,5 +1,12 @@
-name: Jaromil
-avatar: avatar.png
+name: Jaromil Roio
+avatar: avatar.jpg
+caption: Dyne
+avatarsAlt:
+  - avatar-alt.png
+altNames:
+  - Jaromil
+  - Denis Roio
+  - Denis "Jaromil" Roio
 description: >
   Jaromil is a purpose-driven software artisan and hacktivist. Author of the
   forkbomb virus, dubbed as the most elegant computer code ever written, he is

@@ -1,7 +1,12 @@
 name: Joshua Dávila
 avatar: avatar.png
+avatarsAlt:
+  - avatar-alt.png
 altNames:
   - Josh Davila
+  - Josh Dávila
 caption: The Blockchain Socialist
+description: >
+  Cooperative technologist building solidarity finance beyond extractive crypto models.
 refs:
   twitter: TBSocialist

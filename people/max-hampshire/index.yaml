@@ -1,4 +1,9 @@
 name: Max Hampshire
 avatar: avatar.jpeg
+avatarsAlt:
+  - avatar-alt.jpg
+caption: Nym
+description: >
+  DevRel closely working with communities & organisations building on top of mixnet
 refs:
   twitter: _wjth

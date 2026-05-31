@@ -1,9 +1,11 @@
 /**
  * Import Neocypherpunk Summit 2026 speakers from s26ber.web3privacy.info
  *
- *   node scripts/import-neocypherpunk-speakers.js [html-path]       # create missing people + link event
- *   node scripts/import-neocypherpunk-speakers.js --fix-refs [html] # repair refs on imported speakers
+ *   node scripts/import-neocypherpunk-speakers.js [html-path]            # create missing people + link event
+ *   node scripts/import-neocypherpunk-speakers.js --fix-refs [html]      # repair refs on imported speakers
+ *   node scripts/import-neocypherpunk-speakers.js --update-existing [html] # enrich pre-existing speaker profiles
  */
+import { execSync } from 'node:child_process'
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
 import { join, extname } from 'node:path'
 
@@ -11,9 +13,13 @@ const ROOT = join(import.meta.dirname, '..')
 const PEOPLE = join(ROOT, 'people')
 const EVENT_PATH = join(ROOT, '..', 'events', 'events', 'neocypherpunk-summit-berlin-2026', 'index.yaml')
 const SITE = 'https://s26ber.web3privacy.info'
+const ALT_AVATAR = 'avatar-alt'
 const args = process.argv.slice(2)
 const FIX_REFS = args.includes('--fix-refs')
+const UPDATE_EXISTING = args.includes('--update-existing')
 const HTML_PATH = args.find(a => !a.startsWith('--')) ?? '/tmp/ncs.html'
+
+const SKIP_SUMMIT_AVATAR = new Set(['jaromil'])
 
 const ID_OVERRIDES = {
   'denis jaromil roio': 'jaromil',
@@ -172,6 +178,146 @@ function upsertRefs(yaml, refs) {
   return block ? `${base}\n${block}\n` : `${base}\n`
 }
 
+function mergeRefs(yaml, { twitter, web }) {
+  if (!twitter && !web) return yaml
+  const existingTw = yaml.match(/^  twitter: (.+)$/m)?.[1]
+  const existingWeb = yaml.match(/^  web: (.+)$/m)?.[1]
+  if (!yaml.match(/^refs:/m)) {
+    return upsertRefs(yaml, { twitter, web })
+  }
+  let next = yaml
+  if (twitter && !existingTw) {
+    next = next.replace(/^refs:\n/m, `refs:\n  twitter: ${twitter}\n`)
+  }
+  if (web && !existingWeb) {
+    next = next.replace(/^refs:\n/m, `refs:\n  web: ${yamlEscape(web)}\n`)
+  }
+  return next
+}
+
+function fieldBlock(yaml, key) {
+  if (key === 'description') {
+    const m = yaml.match(/^description: >\n([\s\S]*?)(?=\n(?:[a-zA-Z][\w-]*:|$))/m)
+    return m?.[1]?.replace(/^  /gm, '').trim() ?? null
+  }
+  const m = yaml.match(new RegExp(`^${key}:\\s*"?(.+?)"?\\s*$`, 'm'))
+  return m?.[1]?.trim() ?? null
+}
+
+function upsertCaption(yaml, caption) {
+  if (!caption || fieldBlock(yaml, 'caption')) return yaml
+  const lines = yaml.split('\n')
+  const avatarIdx = lines.findIndex(l => /^avatar:/.test(l))
+  const insertAt = avatarIdx >= 0 ? avatarIdx + 1 : 1
+  lines.splice(insertAt, 0, `caption: ${yamlEscape(caption)}`)
+  return lines.join('\n')
+}
+
+function upsertDescription(yaml, desc) {
+  if (!desc || fieldBlock(yaml, 'description')) return yaml
+  const block = `description: >\n  ${desc}\n`
+  if (/^refs:/m.test(yaml)) return yaml.replace(/^refs:/m, `${block}refs:`)
+  return `${yaml.replace(/\n+$/, '')}\n${block}`
+}
+
+function listAltNames(yaml) {
+  const block = yaml.match(/^altNames:\n((?:  - .+\n)+)/m)?.[1] ?? ''
+  return block.match(/^  - (.+)$/gm)?.map(l => l.slice(4).trim()) ?? []
+}
+
+function upsertAltName(yaml, name) {
+  const display = titleCase(name.replace(/^DR /i, 'Dr '))
+  const current = fieldBlock(yaml, 'name')?.replace(/^"|"$/g, '')
+  const existing = new Set([
+    norm(current ?? ''),
+    ...listAltNames(yaml).map(n => norm(n.replace(/^"|"$/g, ''))),
+  ])
+  if (!display || existing.has(norm(display))) return yaml
+  if (/^altNames:/m.test(yaml)) {
+    return yaml.replace(/^(altNames:\n(?:  - .+\n)+)/m, `$1  - ${yamlEscape(display)}\n`)
+  }
+  const lines = yaml.split('\n')
+  const avatarIdx = lines.findIndex(l => /^avatar:/.test(l))
+  lines.splice(avatarIdx + 1, 0, 'altNames:', `  - ${yamlEscape(display)}`)
+  return lines.join('\n')
+}
+
+function listAvatarsAlt(yaml) {
+  const block = yaml.match(/^avatarsAlt:\n((?:  - .+\n)+)/m)?.[1] ?? ''
+  return block.match(/^  - (.+)$/gm)?.map(l => l.slice(4).trim()) ?? []
+}
+
+function upsertAvatarsAlt(yaml, filename) {
+  if (listAvatarsAlt(yaml).includes(filename)) return yaml
+  if (/^avatarsAlt:/m.test(yaml)) {
+    return yaml.replace(/^(avatarsAlt:\n(?:  - .+\n)*)/m, `$1  - ${filename}\n`)
+  }
+  const lines = yaml.split('\n')
+  const avatarIdx = lines.findIndex(l => /^avatar:/.test(l))
+  lines.splice(avatarIdx + 1, 0, 'avatarsAlt:', `  - ${filename}`)
+  return lines.join('\n')
+}
+
+function existedBeforeSummitImport(id) {
+  try {
+    execSync(`git cat-file -e 'c62c99d^:people/${id}/index.yaml'`, { cwd: ROOT, stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function summarizeChanges(before, after) {
+  const parts = []
+  if (fieldBlock(before, 'caption') !== fieldBlock(after, 'caption') && fieldBlock(after, 'caption')) {
+    parts.push(`caption: ${fieldBlock(after, 'caption')}`)
+  }
+  if (!fieldBlock(before, 'description') && fieldBlock(after, 'description')) parts.push('description')
+  if (stripRefs(before) !== stripRefs(after)) parts.push('refs')
+  if (listAltNames(before).length !== listAltNames(after).length) parts.push('altNames')
+  if (listAvatarsAlt(before).length !== listAvatarsAlt(after).length) parts.push('avatar alt')
+  return parts.join(', ') || 'unchanged'
+}
+
+async function updateExistingProfiles(speakers, existing) {
+  const byId = new Map(speakers.map(sp => [resolveId(sp.name, existing), sp]))
+  let updated = 0
+
+  for (const id of eventSpeakerIds()) {
+    if (!existedBeforeSummitImport(id)) continue
+
+    const sp = byId.get(id)
+    const path = join(PEOPLE, id, 'index.yaml')
+    if (!sp || !existsSync(path)) continue
+
+    const dir = join(PEOPLE, id)
+    let yaml = readFileSync(path, 'utf8')
+    const before = yaml
+
+    yaml = upsertCaption(yaml, sp.org)
+    yaml = upsertDescription(yaml, sp.desc)
+    yaml = mergeRefs(yaml, { twitter: sp.twitter, web: sp.web })
+    yaml = upsertAltName(yaml, sp.name)
+
+    const ext = avatarExt(sp.img)
+    const altFile = `${ALT_AVATAR}.${ext}`
+    const altPath = join(dir, altFile)
+    const alreadyAlt = listAvatarsAlt(yaml).includes(altFile)
+    if (!SKIP_SUMMIT_AVATAR.has(id) && !alreadyAlt && sp.img) {
+      if (!existsSync(altPath)) await downloadAvatar(sp.img, altPath)
+      yaml = upsertAvatarsAlt(yaml, altFile)
+    }
+
+    if (yaml !== before) {
+      writeFileSync(path, yaml.endsWith('\n') ? yaml : `${yaml}\n`)
+      console.log(`  ✓ ${id} — ${summarizeChanges(before, yaml)}`)
+      updated++
+    }
+  }
+
+  console.log(`\nUpdated ${updated} existing profiles`)
+}
+
 function eventSpeakerIds() {
   const yaml = readFileSync(EVENT_PATH, 'utf8')
   return yaml.match(/^speakers:\n((?:  - .+\n)+)/m)?.[1]
@@ -253,6 +399,10 @@ async function main() {
 
   if (FIX_REFS) {
     await fixRefs(speakers, existing)
+    return
+  }
+  if (UPDATE_EXISTING) {
+    await updateExistingProfiles(speakers, existing)
     return
   }
   await importMissing(speakers, existing)

@@ -1,4 +1,9 @@
 name: Calle
 avatar: avatar.jpeg
+avatarsAlt:
+  - avatar-alt.jpg
+caption: Bitchat, Cashu
+description: >
+  Responsible for activating mesh communications for millions of people under pressure from Uganda to China
 refs:
   twitter: callebtc

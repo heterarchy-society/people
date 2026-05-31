@@ -1,5 +1,9 @@
 name: Paul Dylan-Ennis
 avatar: avatar.jpg
+avatarsAlt:
+  - avatar-alt.jpg
 caption: "Philosopher and Ethereum researcher"
+description: >
+  UCD scholar reading crypto as culture as much as code.
 refs:
   twitter: post_polar_
